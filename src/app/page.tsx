@@ -30,7 +30,7 @@ const colorOptions = [
   { label: '白色', value: '&H00FFFFFF' },
   { label: '暖白', value: '&H00F5F5F5' },
   { label: '浅灰', value: '&H00DCDCDC' },
-  { label: '淡黄', value: '&H00D8E8FF' },
+  { label: '淡黄', value: '&H00A8E9FF' },
 ];
 const outlineColorOptions = [
   { label: '深灰', value: '&H2F2F2F' },

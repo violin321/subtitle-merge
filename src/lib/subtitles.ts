@@ -45,7 +45,7 @@ export const defaultOptions: MergeOptions = {
   englishFont: 'PingFang SC',
   englishSize: 12,
   primaryColor: '&H00FFFFFF',
-  englishColor: '&H00FFFFFF',
+  englishColor: '&H00A8E9FF',
   outlineColor: '&H2F2F2F',
   outline: 1,
   shadow: 1,
