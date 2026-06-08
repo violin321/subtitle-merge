@@ -31,7 +31,8 @@ const colorOptions = [
   { label: '白色', value: '&H00FFFFFF' },
   { label: '暖白', value: '&H00F5F5F5' },
   { label: '浅灰', value: '&H00DCDCDC' },
-  { label: '淡黄', value: '&H00A8E9FF' },
+  { label: '极淡黄', value: '&H00CCF4FF' },
+  { label: '暖黄', value: '&H00A8E9FF' },
   { label: '冷蓝白', value: '&H00FFE8D6' },
 ];
 const chineseSizeOptions = [18, 20, 22, 24, 26];
@@ -75,7 +76,7 @@ const presets: Preset[] = [
     id: 'classic-yellow-main',
     name: '经典黄主字幕',
     description: '中文淡黄、英文白色，接近传统双语字幕层级。',
-    options: { ...defaultOptions, primaryColor: '&H00A8E9FF', englishColor: '&H00FFFFFF', outline: 1, shadow: 1 },
+    options: { ...defaultOptions, primaryColor: '&H00CCF4FF', englishColor: '&H00FFFFFF', outline: 1, shadow: 1 },
   },
   {
     id: 'netflix-soft',
@@ -99,7 +100,7 @@ const presets: Preset[] = [
     id: 'bright-scene-strong',
     name: '亮场强可读',
     description: '白字黑边，描边稍强，适合画面偏亮或背景复杂。',
-    options: { ...defaultOptions, primaryColor: '&H00FFFFFF', englishColor: '&H00A8E9FF', outlineColor: '&H000000', outline: 1.3, shadow: 1 },
+    options: { ...defaultOptions, primaryColor: '&H00FFFFFF', englishColor: '&H00CCF4FF', outlineColor: '&H000000', outline: 1.3, shadow: 1 },
   },
   {
     id: 'no-shadow-clean',
