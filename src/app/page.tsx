@@ -265,6 +265,7 @@ export default function Home() {
             <Control label="描边颜色"><select value={options.outlineColor} onChange={(e) => update('outlineColor', e.target.value)}>{outlineColorOptions.map((color) => <option key={color.value} value={color.value}>{color.label}</option>)}</select></Control>
             <Control label="描边粗细"><select value={options.outline} onChange={(e) => update('outline', Number(e.target.value))}>{outlineOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></Control>
             <label className="switch"><input type="checkbox" checked={options.keepEnglishOnly} onChange={(e) => update('keepEnglishOnly', e.target.checked)} /> 保留英文-only 音效/歌词</label>
+            <label className="switch"><input type="checkbox" checked={options.preventOverlap} onChange={(e) => update('preventOverlap', e.target.checked)} /> 避免同屏多句上下漂移</label>
           </div>
         </aside>
 
