@@ -1,6 +1,7 @@
 'use client';
 
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import JSZip from 'jszip';
 import { defaultOptions, mergeSubtitles, type MergeOptions, type MergeStats } from '@/lib/subtitles';
 
 const sampleZh = `[Script Info]
@@ -103,6 +104,35 @@ function presetSlug(id: string) {
   return id.replace(/[^a-z0-9-]+/gi, '-').toLowerCase();
 }
 
+
+type BatchItem = { name: string; key: string; text: string };
+type BatchPair = { key: string; zh?: BatchItem; en?: BatchItem };
+
+function seasonKey(name: string) {
+  return safeNamePart(name)
+    .toLowerCase()
+    .replace(/\b(zh|chs|chi|cn|sc|tc|简体|中文|en|eng|english)\b/giu, '')
+    .replace(/[._-]+(zh|chs|chi|cn|sc|tc|en|eng|english)$/iu, '')
+    .replace(/[-_. ]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function pairBatch(zhItems: BatchItem[], enItems: BatchItem[]) {
+  const map = new Map<string, BatchPair>();
+  for (const item of zhItems) map.set(item.key, { ...(map.get(item.key) ?? { key: item.key }), zh: item });
+  for (const item of enItems) map.set(item.key, { ...(map.get(item.key) ?? { key: item.key }), en: item });
+  return [...map.values()].sort((a, b) => a.key.localeCompare(b.key, 'zh-CN'));
+}
+
+async function readBatchFiles(files: FileList | null): Promise<BatchItem[]> {
+  if (!files) return [];
+  return Promise.all([...files].map(async (file) => ({
+    name: file.name,
+    key: seasonKey(file.name),
+    text: await file.text(),
+  })));
+}
+
 export default function Home() {
   const [zh, setZh] = useState(sampleZh);
   const [en, setEn] = useState(sampleEn);
@@ -115,10 +145,16 @@ export default function Home() {
   const [ass, setAss] = useState('');
   const [stats, setStats] = useState<MergeStats | null>(null);
   const [error, setError] = useState('');
+  const [batchZh, setBatchZh] = useState<BatchItem[]>([]);
+  const [batchEn, setBatchEn] = useState<BatchItem[]>([]);
+  const [batchMessage, setBatchMessage] = useState('');
+  const [batchBusy, setBatchBusy] = useState(false);
 
   const selectedPreset = presets.find((preset) => preset.id === presetId) ?? presets[0];
   const selectedBg = previewBackgrounds.find((item) => item.id === previewBg) ?? previewBackgrounds[0];
   const outputName = `${safeNamePart(zhName)}.${presetSlug(presetId)}.bilingual.ass`;
+  const batchPairs = useMemo(() => pairBatch(batchZh, batchEn), [batchZh, batchEn]);
+  const matchedBatchCount = batchPairs.filter((pair) => pair.zh && pair.en).length;
 
   const previewText = useMemo(() => {
     if (!ass) return ['你在找人吗？', 'Are you looking for someone?'];
@@ -194,6 +230,44 @@ export default function Home() {
     URL.revokeObjectURL(url);
   }
 
+
+  async function handleBatchFiles(event: ChangeEvent<HTMLInputElement>, target: 'zh' | 'en') {
+    const items = await readBatchFiles(event.target.files);
+    if (target === 'zh') setBatchZh(items);
+    else setBatchEn(items);
+    setBatchMessage(items.length ? `已读取 ${items.length} 个${target === 'zh' ? '中文' : '英文'}字幕。` : '');
+  }
+
+  async function downloadBatchZip() {
+    const matched = batchPairs.filter((pair): pair is BatchPair & { zh: BatchItem; en: BatchItem } => Boolean(pair.zh && pair.en));
+    if (!matched.length) {
+      setBatchMessage('没有找到可配对的中英文字幕。请检查文件名是否对应。');
+      return;
+    }
+    setBatchBusy(true);
+    try {
+      const zip = new JSZip();
+      const report: string[] = ['# Subtitle Merge 批量处理报告', '', `样式预设：${selectedPreset.name}`, `成功配对：${matched.length}`, `未配对中文：${batchPairs.filter((pair) => pair.zh && !pair.en).length}`, `未配对英文：${batchPairs.filter((pair) => pair.en && !pair.zh).length}`, ''];
+      for (const pair of matched) {
+        const result = mergeSubtitles(pair.zh.text, pair.en.text, options);
+        const name = `${safeNamePart(pair.zh.name)}.${presetSlug(presetId)}.bilingual.ass`;
+        zip.file(name, result.ass);
+        report.push(`- ${name}: ${result.stats.pairedCount}/${result.stats.chineseCount} 已配对，英文-only ${result.stats.unpairedEnglishCount}`);
+      }
+      zip.file('merge-report.md', report.join('\n'));
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `subtitle-merge.${presetSlug(presetId)}.${matched.length}eps.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setBatchMessage(`已生成 ${matched.length} 集字幕 ZIP。`);
+    } finally {
+      setBatchBusy(false);
+    }
+  }
+
   const update = <K extends keyof MergeOptions>(key: K, value: MergeOptions[K]) => setOptions((x) => ({ ...x, [key]: value }));
 
   return (
@@ -244,6 +318,39 @@ export default function Home() {
 
           {error && <p className="error">{error}</p>}
           {stats && <Stats stats={stats} />}
+        </section>
+
+        <section className="panel batchPanel" aria-labelledby="batch-title">
+          <div className="panelHead compact">
+            <div>
+              <p className="sectionLabel">批量</p>
+              <h2 id="batch-title">整季处理</h2>
+            </div>
+            <button className="secondary" onClick={downloadBatchZip} disabled={batchBusy || matchedBatchCount === 0}>{batchBusy ? '打包中…' : '下载 ZIP'}</button>
+          </div>
+          <p className="hint">一次选择多集字幕，系统按文件名自动配对，统一使用当前样式生成 ASS。仍然只在浏览器本地处理。</p>
+          <div className="batchUpload">
+            <label className="fileDrop compactDrop">
+              <input type="file" accept=".ass,.srt,.ssa,text/plain" multiple onChange={(e) => handleBatchFiles(e, 'zh')} />
+              <span className="fileBadge">ZH</span>
+              <span><strong>批量中文字幕</strong><small>已选择 {batchZh.length} 个文件</small></span>
+            </label>
+            <label className="fileDrop compactDrop">
+              <input type="file" accept=".ass,.srt,.ssa,text/plain" multiple onChange={(e) => handleBatchFiles(e, 'en')} />
+              <span className="fileBadge">EN</span>
+              <span><strong>批量英文字幕</strong><small>已选择 {batchEn.length} 个文件</small></span>
+            </label>
+          </div>
+          <div className="batchSummary">
+            <span><b>{matchedBatchCount}</b> 已配对</span>
+            <span><b>{batchPairs.filter((pair) => pair.zh && !pair.en).length}</b> 中文未配对</span>
+            <span><b>{batchPairs.filter((pair) => pair.en && !pair.zh).length}</b> 英文未配对</span>
+          </div>
+          {batchMessage && <p className="batchMessage">{batchMessage}</p>}
+          {batchPairs.length > 0 && <div className="batchList" aria-label="批量配对列表">
+            {batchPairs.slice(0, 12).map((pair) => <div key={pair.key}><strong>{pair.key}</strong><span>{pair.zh ? '中文✓' : '中文缺失'} · {pair.en ? '英文✓' : '英文缺失'}</span></div>)}
+            {batchPairs.length > 12 && <em>还有 {batchPairs.length - 12} 组未显示…</em>}
+          </div>}
         </section>
 
         <aside className="panel controls" aria-labelledby="style-title">
