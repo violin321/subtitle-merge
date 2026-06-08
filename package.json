@@ -25,5 +25,8 @@
     "@types/react-dom": "latest",
     "tsx": "latest",
     "typescript": "latest"
+  },
+  "overrides": {
+    "postcss": "^8.5.15"
   }
 }
