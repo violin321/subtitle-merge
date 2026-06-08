@@ -73,6 +73,28 @@ const presets: Preset[] = [
   },
 ];
 
+
+function assColorToCss(input: string, fallback = '#ffffff') {
+  const match = input.match(/^&H(?:[0-9A-Fa-f]{2})?([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})&?$/);
+  if (!match) return fallback;
+  const [, b, g, r] = match;
+  return `#${r}${g}${b}`;
+}
+
+function safeNamePart(input: string) {
+  return input
+    .replace(/\.(zh|chs|chi|cn|sc|tc|en|eng)?\.(ass|srt|ssa)$/i, '')
+    .replace(/\.(ass|srt|ssa)$/i, '')
+    .replace(/[^\p{L}\p{N}._-]+/gu, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 80) || 'subtitle';
+}
+
+function presetSlug(id: string) {
+  return id.replace(/[^a-z0-9-]+/gi, '-').toLowerCase();
+}
+
 export default function Home() {
   const [zh, setZh] = useState(sampleZh);
   const [en, setEn] = useState(sampleEn);
@@ -85,6 +107,7 @@ export default function Home() {
   const [error, setError] = useState('');
 
   const selectedPreset = presets.find((preset) => preset.id === presetId) ?? presets[0];
+  const outputName = `${safeNamePart(zhName)}.${presetSlug(presetId)}.bilingual.ass`;
 
   const previewText = useMemo(() => {
     if (!ass) return ['你在找人吗？', 'Are you looking for someone?'];
@@ -155,7 +178,7 @@ export default function Home() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'merged.bilingual.ass';
+    a.download = outputName;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -242,6 +265,7 @@ export default function Home() {
             </div>
             <button className="secondary" onClick={download}>下载 ASS</button>
           </div>
+          <p className="downloadName">下载文件名：{outputName}</p>
           <div className="previewGrid">
             <Device title="手机横屏" mode="phone" zh={previewText[0]} en={previewText[1]} options={options} />
             <Device title="电脑播放器" mode="desktop" zh={previewText[0]} en={previewText[1]} options={options} />
@@ -291,13 +315,24 @@ function Stats({ stats }: { stats: MergeStats }) {
 }
 
 function Device({ title, mode, zh, en, options }: { title: string; mode: 'phone' | 'desktop'; zh: string; en: string; options: MergeOptions }) {
+  const scale = mode === 'phone' ? 0.9 : 1.25;
+  const chineseSize = Math.max(11, Math.round(options.chineseSize * scale));
+  const englishSize = Math.max(9, Math.round(options.englishSize * scale));
+  const englishColor = assColorToCss(options.englishColor, '#ffffff');
+  const outlineColor = assColorToCss(options.outlineColor, '#2f2f2f');
+  const outline = Math.max(0, Number(options.outline) || 0);
+  const shadow = Number(options.shadow) || 0;
+  const textShadow = outline === 0
+    ? (shadow ? `0 ${shadow}px ${shadow * 2}px ${outlineColor}` : 'none')
+    : `0 ${outline}px 0 ${outlineColor}, ${outline}px 0 0 ${outlineColor}, -${outline}px 0 0 ${outlineColor}, 0 -${outline}px 0 ${outlineColor}${shadow ? `, 0 ${shadow + outline}px ${shadow * 2}px ${outlineColor}` : ''}`;
+
   return <figure className="deviceWrap">
     <figcaption>{title}</figcaption>
     <div className={mode === 'phone' ? 'phone' : 'desktop'}>
       <div className="frameGrid" />
-      <div className="subtitle">
-        <div style={{ fontFamily: options.chineseFont, fontSize: mode === 'phone' ? 18 : 25 }}>{zh}</div>
-        <div style={{ fontFamily: options.englishFont, fontSize: mode === 'phone' ? 12 : 16 }}>{en}</div>
+      <div className="subtitle" style={{ textShadow }}>
+        <div style={{ fontFamily: options.chineseFont, fontSize: chineseSize }}>{zh}</div>
+        <div style={{ fontFamily: options.englishFont, fontSize: englishSize, color: englishColor }}>{en}</div>
       </div>
     </div>
   </figure>;

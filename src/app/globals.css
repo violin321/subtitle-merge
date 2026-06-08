@@ -100,7 +100,7 @@ h2 { margin: 0; font-size: 20px; letter-spacing: -.02em; }
 .desktop { width: 100%; aspect-ratio: 16 / 9; border-radius: 16px; }
 .frameGrid { position: absolute; inset: 0; background: linear-gradient(120deg, oklch(0.18 0.024 250), oklch(0.30 0.026 38) 48%, oklch(0.12 0.018 250)); }
 .frameGrid::after { content: ''; position: absolute; inset: 12%; border: 1px solid color-mix(in oklch, var(--text) 10%, transparent); border-radius: 22px; opacity: .55; }
-.subtitle { position: absolute; left: 5%; right: 5%; bottom: 8%; text-align: center; line-height: 1.17; color: oklch(0.98 0.003 250); text-shadow: 0 1px 0 #2f2f2f, 1px 0 0 #2f2f2f, -1px 0 0 #2f2f2f, 0 -1px 0 #2f2f2f; }
+.subtitle { position: absolute; left: 5%; right: 5%; bottom: 8%; text-align: center; line-height: 1.17; color: oklch(0.98 0.003 250); }
 .subtitle div + div { margin-top: .16em; }
 .outputPanel textarea { min-height: 260px; }
 @media (max-width: 1100px) {
@@ -155,3 +155,5 @@ select {
   .privacyNote a { margin-left: 0; }
   .adminGrid { grid-template-columns: 1fr; }
 }
+
+.downloadName { margin: -4px 0 14px; color: var(--muted); font-size: 12px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
