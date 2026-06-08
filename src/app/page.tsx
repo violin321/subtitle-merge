@@ -42,7 +42,7 @@ export default function Home() {
     return [plain[0] || '你在找人吗？', plain.slice(1).join(' ') || 'Are you looking for someone?'];
   }, [ass]);
 
-  const status = stats ? `${stats.pairedCount}/${stats.chineseCount} paired` : 'ready';
+  const status = stats ? `${stats.pairedCount}/${stats.chineseCount} 已配对` : '就绪';
 
   function handleFile(event: ChangeEvent<HTMLInputElement>, target: 'zh' | 'en') {
     const file = event.target.files?.[0];
@@ -93,40 +93,40 @@ export default function Home() {
     <main className="shell">
       <header className="topbar" aria-label="Project summary">
         <div>
-          <p className="kicker">Subtitle workbench</p>
-          <h1>Merge bilingual subtitles without fighting iPhone rendering.</h1>
+          <p className="kicker">字幕工作台</p>
+          <h1>把中英字幕合成适合 iPhone 播放的 ASS 双语字幕。</h1>
         </div>
         <div className="statusStrip" aria-live="polite">
-          <span>ASS output</span>
+          <span>ASS 输出</span>
           <strong>{status}</strong>
         </div>
       </header>
 
       <section className="workflow" aria-label="Main workflow">
-        <div className="step active"><span>01</span>Load files</div>
-        <div className="step"><span>02</span>Tune style</div>
-        <div className="step"><span>03</span>Preview</div>
-        <div className="step"><span>04</span>Export ASS</div>
+        <div className="step active"><span>01</span>上传字幕</div>
+        <div className="step"><span>02</span>调整样式</div>
+        <div className="step"><span>03</span>预览效果</div>
+        <div className="step"><span>04</span>导出 ASS</div>
       </section>
 
       <section className="workbench">
         <section className="panel inputPanel" aria-labelledby="input-title">
           <div className="panelHead">
             <div>
-              <p className="sectionLabel">Input</p>
-              <h2 id="input-title">Subtitle sources</h2>
+              <p className="sectionLabel">输入</p>
+              <h2 id="input-title">字幕来源</h2>
             </div>
-            <button onClick={runMerge}>Merge now</button>
+            <button onClick={runMerge}>立即合并</button>
           </div>
 
           <div className="uploadRail">
-            <FileDrop title="Chinese track" fileName={zhName} hint=".ass / .srt / .ssa" onChange={(e) => handleFile(e, 'zh')} />
-            <FileDrop title="English track" fileName={enName} hint=".ass / .srt / .ssa" onChange={(e) => handleFile(e, 'en')} />
+            <FileDrop title="中文字幕" fileName={zhName} hint=".ass / .srt / .ssa" onChange={(e) => handleFile(e, 'zh')} />
+            <FileDrop title="英文字幕" fileName={enName} hint=".ass / .srt / .ssa" onChange={(e) => handleFile(e, 'en')} />
           </div>
 
           <div className="editors">
-            <label>Chinese text<textarea value={zh} onChange={(e) => setZh(e.target.value)} /></label>
-            <label>English text<textarea value={en} onChange={(e) => setEn(e.target.value)} /></label>
+            <label>中文字幕文本<textarea value={zh} onChange={(e) => setZh(e.target.value)} /></label>
+            <label>英文字幕文本<textarea value={en} onChange={(e) => setEn(e.target.value)} /></label>
           </div>
 
           {error && <p className="error">{error}</p>}
@@ -134,43 +134,43 @@ export default function Home() {
         </section>
 
         <aside className="panel controls" aria-labelledby="style-title">
-          <p className="sectionLabel">Style preset</p>
+          <p className="sectionLabel">样式预设</p>
           <h2 id="style-title">YYeTs / iPhone</h2>
-          <p className="hint">Single Dialogue block, 384×288 canvas, non-scaling outline. LLM is off by default.</p>
+          <p className="hint">单条 Dialogue 双语块，384×288 画布，描边不随分辨率缩放。默认不使用 LLM。</p>
           <div className="controlGrid">
-            <Control label="Chinese font"><input value={options.chineseFont} onChange={(e) => update('chineseFont', e.target.value)} /></Control>
-            <Control label="Chinese size"><input type="number" min="12" value={options.chineseSize} onChange={(e) => update('chineseSize', Number(e.target.value))} /></Control>
-            <Control label="English font"><input value={options.englishFont} onChange={(e) => update('englishFont', e.target.value)} /></Control>
-            <Control label="English size"><input type="number" min="8" value={options.englishSize} onChange={(e) => update('englishSize', Number(e.target.value))} /></Control>
-            <Control label="English color"><input value={options.englishColor} onChange={(e) => update('englishColor', e.target.value)} /></Control>
-            <Control label="Outline color"><input value={options.outlineColor} onChange={(e) => update('outlineColor', e.target.value)} /></Control>
-            <Control label="Outline"><input type="number" step="0.1" min="0" value={options.outline} onChange={(e) => update('outline', Number(e.target.value))} /></Control>
-            <label className="switch"><input type="checkbox" checked={options.keepEnglishOnly} onChange={(e) => update('keepEnglishOnly', e.target.checked)} /> Keep English-only SFX/lyrics</label>
+            <Control label="中文字体"><input value={options.chineseFont} onChange={(e) => update('chineseFont', e.target.value)} /></Control>
+            <Control label="中文字号"><input type="number" min="12" value={options.chineseSize} onChange={(e) => update('chineseSize', Number(e.target.value))} /></Control>
+            <Control label="英文字体"><input value={options.englishFont} onChange={(e) => update('englishFont', e.target.value)} /></Control>
+            <Control label="英文字号"><input type="number" min="8" value={options.englishSize} onChange={(e) => update('englishSize', Number(e.target.value))} /></Control>
+            <Control label="英文颜色"><input value={options.englishColor} onChange={(e) => update('englishColor', e.target.value)} /></Control>
+            <Control label="描边颜色"><input value={options.outlineColor} onChange={(e) => update('outlineColor', e.target.value)} /></Control>
+            <Control label="描边粗细"><input type="number" step="0.1" min="0" value={options.outline} onChange={(e) => update('outline', Number(e.target.value))} /></Control>
+            <label className="switch"><input type="checkbox" checked={options.keepEnglishOnly} onChange={(e) => update('keepEnglishOnly', e.target.checked)} /> 保留英文-only 音效/歌词</label>
           </div>
         </aside>
 
         <section className="panel previewPanel" aria-labelledby="preview-title">
           <div className="panelHead compact">
             <div>
-              <p className="sectionLabel">Preview</p>
-              <h2 id="preview-title">Playback check</h2>
+              <p className="sectionLabel">预览</p>
+              <h2 id="preview-title">播放预览</h2>
             </div>
-            <button className="secondary" onClick={download}>Download ASS</button>
+            <button className="secondary" onClick={download}>下载 ASS</button>
           </div>
           <div className="previewGrid">
-            <Device title="iPhone landscape" mode="phone" zh={previewText[0]} en={previewText[1]} options={options} />
-            <Device title="Desktop player" mode="desktop" zh={previewText[0]} en={previewText[1]} options={options} />
+            <Device title="iPhone 横屏" mode="phone" zh={previewText[0]} en={previewText[1]} options={options} />
+            <Device title="电脑播放器" mode="desktop" zh={previewText[0]} en={previewText[1]} options={options} />
           </div>
         </section>
 
         <section className="panel outputPanel" aria-labelledby="output-title">
           <div className="panelHead compact">
             <div>
-              <p className="sectionLabel">Output</p>
-              <h2 id="output-title">Generated ASS</h2>
+              <p className="sectionLabel">输出</p>
+              <h2 id="output-title">生成的 ASS</h2>
             </div>
           </div>
-          <textarea value={ass} readOnly placeholder="Merge subtitles to inspect the ASS output here." />
+          <textarea value={ass} readOnly placeholder="合并后可在这里检查 ASS 输出。" />
         </section>
       </section>
     </main>
@@ -197,11 +197,11 @@ function Control({ label, children }: { label: string; children: React.ReactNode
 
 function Stats({ stats }: { stats: MergeStats }) {
   return <div className="stats" aria-label="Merge statistics">
-    <span><b>{stats.chineseCount}</b> Chinese</span>
-    <span><b>{stats.englishCount}</b> English</span>
-    <span><b>{stats.pairedCount}</b> Paired</span>
-    <span><b>{stats.unpairedEnglishCount}</b> English-only</span>
-    <span><b>{stats.outputCount}</b> Output</span>
+    <span><b>{stats.chineseCount}</b> 中文</span>
+    <span><b>{stats.englishCount}</b> 英文</span>
+    <span><b>{stats.pairedCount}</b> 已配对</span>
+    <span><b>{stats.unpairedEnglishCount}</b> 英文-only</span>
+    <span><b>{stats.outputCount}</b> 输出</span>
   </div>;
 }
 
