@@ -157,3 +157,23 @@ select {
 }
 
 .downloadName { margin: -4px 0 14px; color: var(--muted); font-size: 12px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.previewToolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: -4px 0 14px; }
+.chip { min-height: 34px; padding: 0 12px; border-radius: 999px; background: var(--raised); color: var(--muted); border-color: var(--border); font-size: 12px; }
+.chip.active { color: oklch(0.16 0.02 230); background: var(--accent); border-color: var(--accent); }
+.deviceWrap figcaption { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.openPreview { min-height: 30px; padding: 0 10px; font-size: 12px; background: var(--raised); color: var(--text); border-color: var(--border); }
+.frameGrid.bgDark { background: linear-gradient(120deg, oklch(0.18 0.024 250), oklch(0.30 0.026 38) 48%, oklch(0.12 0.018 250)); }
+.frameGrid.bgBright { background: linear-gradient(120deg, oklch(0.88 0.022 95), oklch(0.78 0.03 235) 48%, oklch(0.96 0.012 80)); }
+.frameGrid.bgBusy { background:
+  radial-gradient(circle at 24% 30%, rgba(255,255,255,.45), transparent 12%),
+  radial-gradient(circle at 72% 42%, rgba(0,0,0,.35), transparent 18%),
+  linear-gradient(135deg, oklch(0.28 0.08 25), oklch(0.65 0.08 85) 38%, oklch(0.20 0.07 250) 72%, oklch(0.82 0.04 210)); }
+.frameGrid.bgStress { background:
+  repeating-linear-gradient(45deg, rgba(255,255,255,.18) 0 10px, rgba(0,0,0,.22) 10px 20px),
+  linear-gradient(90deg, oklch(0.94 0.02 90), oklch(0.18 0.04 250)); }
+.lightbox { position: fixed; inset: 0; z-index: 50; background: rgba(3,7,18,.82); display: grid; place-items: center; padding: 24px; backdrop-filter: blur(6px); }
+.lightboxInner { width: min(1180px, 100%); border: 1px solid var(--border); border-radius: 24px; background: var(--panel); padding: 18px; box-shadow: 0 30px 90px rgba(0,0,0,.44); }
+.lightboxHead { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+.deviceWrap.large { display: grid; place-items: center; }
+.largeDevice.phone { max-width: 920px; }
+.largeDevice.desktop { max-width: 1080px; }

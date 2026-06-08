@@ -45,6 +45,14 @@ const outlineOptions = [
   { label: '稍强 1.3', value: 1.3 },
 ];
 
+
+const previewBackgrounds = [
+  { id: 'dark', name: '暗场', className: 'bgDark' },
+  { id: 'bright', name: '亮场', className: 'bgBright' },
+  { id: 'busy', name: '复杂画面', className: 'bgBusy' },
+  { id: 'stress', name: '字幕压力测试', className: 'bgStress' },
+];
+
 type Preset = {
   id: string;
   name: string;
@@ -101,12 +109,15 @@ export default function Home() {
   const [zhName, setZhName] = useState('sample.zh.ass');
   const [enName, setEnName] = useState('sample.en.srt');
   const [presetId, setPresetId] = useState(presets[0].id);
+  const [previewBg, setPreviewBg] = useState(previewBackgrounds[0].id);
+  const [lightboxMode, setLightboxMode] = useState<'phone' | 'desktop' | null>(null);
   const [options, setOptions] = useState<MergeOptions>(defaultOptions);
   const [ass, setAss] = useState('');
   const [stats, setStats] = useState<MergeStats | null>(null);
   const [error, setError] = useState('');
 
   const selectedPreset = presets.find((preset) => preset.id === presetId) ?? presets[0];
+  const selectedBg = previewBackgrounds.find((item) => item.id === previewBg) ?? previewBackgrounds[0];
   const outputName = `${safeNamePart(zhName)}.${presetSlug(presetId)}.bilingual.ass`;
 
   const previewText = useMemo(() => {
@@ -266,10 +277,26 @@ export default function Home() {
             <button className="secondary" onClick={download}>下载 ASS</button>
           </div>
           <p className="downloadName">下载文件名：{outputName}</p>
-          <div className="previewGrid">
-            <Device title="手机横屏" mode="phone" zh={previewText[0]} en={previewText[1]} options={options} />
-            <Device title="电脑播放器" mode="desktop" zh={previewText[0]} en={previewText[1]} options={options} />
+          <div className="previewToolbar" aria-label="预览背景">
+            {previewBackgrounds.map((item) => (
+              <button key={item.id} type="button" className={item.id === previewBg ? 'chip active' : 'chip'} onClick={() => setPreviewBg(item.id)}>{item.name}</button>
+            ))}
           </div>
+          <div className="previewGrid">
+            <Device title="手机横屏" mode="phone" bgClass={selectedBg.className} zh={previewText[0]} en={previewText[1]} options={options} onOpen={() => setLightboxMode('phone')} />
+            <Device title="电脑播放器" mode="desktop" bgClass={selectedBg.className} zh={previewText[0]} en={previewText[1]} options={options} onOpen={() => setLightboxMode('desktop')} />
+          </div>
+          {lightboxMode && (
+            <div className="lightbox" role="dialog" aria-modal="true" aria-label="放大预览" onClick={() => setLightboxMode(null)}>
+              <div className="lightboxInner" onClick={(event) => event.stopPropagation()}>
+                <div className="lightboxHead">
+                  <strong>{lightboxMode === 'phone' ? '手机横屏放大预览' : '电脑播放器放大预览'}</strong>
+                  <button type="button" className="secondary" onClick={() => setLightboxMode(null)}>关闭</button>
+                </div>
+                <Device title="" mode={lightboxMode} bgClass={selectedBg.className} zh={previewText[0]} en={previewText[1]} options={options} large />
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="panel outputPanel" aria-labelledby="output-title">
@@ -314,8 +341,8 @@ function Stats({ stats }: { stats: MergeStats }) {
   </div>;
 }
 
-function Device({ title, mode, zh, en, options }: { title: string; mode: 'phone' | 'desktop'; zh: string; en: string; options: MergeOptions }) {
-  const scale = mode === 'phone' ? 0.9 : 1.25;
+function Device({ title, mode, bgClass, zh, en, options, onOpen, large = false }: { title: string; mode: 'phone' | 'desktop'; bgClass: string; zh: string; en: string; options: MergeOptions; onOpen?: () => void; large?: boolean }) {
+  const scale = large ? (mode === 'phone' ? 1.35 : 1.65) : (mode === 'phone' ? 0.9 : 1.25);
   const chineseSize = Math.max(11, Math.round(options.chineseSize * scale));
   const englishSize = Math.max(9, Math.round(options.englishSize * scale));
   const englishColor = assColorToCss(options.englishColor, '#ffffff');
@@ -326,10 +353,10 @@ function Device({ title, mode, zh, en, options }: { title: string; mode: 'phone'
     ? (shadow ? `0 ${shadow}px ${shadow * 2}px ${outlineColor}` : 'none')
     : `0 ${outline}px 0 ${outlineColor}, ${outline}px 0 0 ${outlineColor}, -${outline}px 0 0 ${outlineColor}, 0 -${outline}px 0 ${outlineColor}${shadow ? `, 0 ${shadow + outline}px ${shadow * 2}px ${outlineColor}` : ''}`;
 
-  return <figure className="deviceWrap">
-    <figcaption>{title}</figcaption>
-    <div className={mode === 'phone' ? 'phone' : 'desktop'}>
-      <div className="frameGrid" />
+  return <figure className={large ? 'deviceWrap large' : 'deviceWrap'}>
+    {title && <figcaption>{title}<button type="button" className="openPreview" onClick={onOpen}>放大</button></figcaption>}
+    <div className={`${mode === 'phone' ? 'phone' : 'desktop'} ${large ? 'largeDevice' : ''}`}>
+      <div className={`frameGrid ${bgClass}`} />
       <div className="subtitle" style={{ textShadow }}>
         <div style={{ fontFamily: options.chineseFont, fontSize: chineseSize }}>{zh}</div>
         <div style={{ fontFamily: options.englishFont, fontSize: englishSize, color: englishColor }}>{en}</div>
