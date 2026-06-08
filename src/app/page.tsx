@@ -32,7 +32,10 @@ const colorOptions = [
   { label: '暖白', value: '&H00F5F5F5' },
   { label: '浅灰', value: '&H00DCDCDC' },
   { label: '淡黄', value: '&H00A8E9FF' },
+  { label: '冷蓝白', value: '&H00FFE8D6' },
 ];
+const chineseSizeOptions = [18, 20, 22, 24, 26];
+const englishSizeOptions = [10, 12, 13, 14, 16];
 const outlineColorOptions = [
   { label: '深灰', value: '&H2F2F2F' },
   { label: '柔黑', value: '&H4A4A4A' },
@@ -65,8 +68,20 @@ const presets: Preset[] = [
   {
     id: 'mobile-clear',
     name: '移动端清晰',
-    description: '推荐默认值：小画布、细描边，适合手机横屏。',
+    description: '推荐默认值：中文白色、英文淡黄，小画布和细描边，适合手机横屏。',
     options: defaultOptions,
+  },
+  {
+    id: 'classic-yellow-main',
+    name: '经典黄主字幕',
+    description: '中文淡黄、英文白色，接近传统双语字幕层级。',
+    options: { ...defaultOptions, primaryColor: '&H00A8E9FF', englishColor: '&H00FFFFFF', outline: 1, shadow: 1 },
+  },
+  {
+    id: 'netflix-soft',
+    name: '网飞柔和白灰',
+    description: '中文暖白、英文浅灰，低干扰，适合剧情片。',
+    options: { ...defaultOptions, primaryColor: '&H00F5F5F5', englishColor: '&H00DCDCDC', outline: 0.8, shadow: 0 },
   },
   {
     id: 'desktop-balanced',
@@ -79,6 +94,18 @@ const presets: Preset[] = [
     name: '轻描边柔和',
     description: '降低描边和阴影，减少移动端边缘发硬。',
     options: { ...defaultOptions, chineseSize: 20, englishSize: 12, outline: 0.6, shadow: 0, outlineColor: '&H4A4A4A' },
+  },
+  {
+    id: 'bright-scene-strong',
+    name: '亮场强可读',
+    description: '白字黑边，描边稍强，适合画面偏亮或背景复杂。',
+    options: { ...defaultOptions, primaryColor: '&H00FFFFFF', englishColor: '&H00A8E9FF', outlineColor: '&H000000', outline: 1.3, shadow: 1 },
+  },
+  {
+    id: 'no-shadow-clean',
+    name: '无阴影清爽',
+    description: '保留细描边但去掉阴影，减少 iOS 播放器边缘发毛。',
+    options: { ...defaultOptions, primaryColor: '&H00F5F5F5', englishColor: '&H00DCDCDC', outline: 0.5, shadow: 0 },
   },
 ];
 
@@ -128,11 +155,30 @@ function seasonKey(name: string) {
     .toLowerCase()
     .slice(0, 120) || 'subtitle';
 }
-function pairBatch(zhItems: BatchItem[], enItems: BatchItem[]) {
+function pairBatch(zhItems: BatchItem[], enItems: BatchItem[], manualMatches: Record<string, string> = {}) {
+  const enByName = new Map(enItems.map((item) => [item.name, item]));
+  const usedEn = new Set<string>();
+  const pairs: BatchPair[] = [];
+
+  for (const zh of zhItems) {
+    const manualEnName = manualMatches[zh.name];
+    const manualEn = manualEnName ? enByName.get(manualEnName) : undefined;
+    if (manualEn) {
+      usedEn.add(manualEn.name);
+      pairs.push({ key: zh.key, zh, en: manualEn });
+    }
+  }
+
   const map = new Map<string, BatchPair>();
-  for (const item of zhItems) map.set(item.key, { ...(map.get(item.key) ?? { key: item.key }), zh: item });
-  for (const item of enItems) map.set(item.key, { ...(map.get(item.key) ?? { key: item.key }), en: item });
-  return [...map.values()].sort((a, b) => a.key.localeCompare(b.key, 'zh-CN'));
+  for (const item of zhItems) {
+    if (manualMatches[item.name]) continue;
+    map.set(item.key, { ...(map.get(item.key) ?? { key: item.key }), zh: item });
+  }
+  for (const item of enItems) {
+    if (usedEn.has(item.name)) continue;
+    map.set(item.key, { ...(map.get(item.key) ?? { key: item.key }), en: item });
+  }
+  return [...pairs, ...map.values()].sort((a, b) => a.key.localeCompare(b.key, 'zh-CN'));
 }
 
 async function readBatchFiles(files: FileList | null): Promise<BatchItem[]> {
@@ -160,11 +206,12 @@ export default function Home() {
   const [batchEn, setBatchEn] = useState<BatchItem[]>([]);
   const [batchMessage, setBatchMessage] = useState('');
   const [batchBusy, setBatchBusy] = useState(false);
+  const [manualMatches, setManualMatches] = useState<Record<string, string>>({});
 
   const selectedPreset = presets.find((preset) => preset.id === presetId) ?? presets[0];
   const selectedBg = previewBackgrounds.find((item) => item.id === previewBg) ?? previewBackgrounds[0];
   const outputName = `${safeNamePart(zhName)}.${presetSlug(presetId)}.bilingual.ass`;
-  const batchPairs = useMemo(() => pairBatch(batchZh, batchEn), [batchZh, batchEn]);
+  const batchPairs = useMemo(() => pairBatch(batchZh, batchEn, manualMatches), [batchZh, batchEn, manualMatches]);
   const matchedBatchCount = batchPairs.filter((pair) => pair.zh && pair.en).length;
 
   const previewText = useMemo(() => {
@@ -246,7 +293,18 @@ export default function Home() {
     const items = await readBatchFiles(event.target.files);
     if (target === 'zh') setBatchZh(items);
     else setBatchEn(items);
+    setManualMatches({});
     setBatchMessage(items.length ? `已读取 ${items.length} 个${target === 'zh' ? '中文' : '英文'}字幕。` : '');
+  }
+
+
+  function setManualMatch(zhName: string, enName: string) {
+    setManualMatches((current) => {
+      const next = { ...current };
+      if (!enName) delete next[zhName];
+      else next[zhName] = enName;
+      return next;
+    });
   }
 
   async function downloadBatchZip() {
@@ -358,6 +416,17 @@ export default function Home() {
             <span><b>{batchPairs.filter((pair) => pair.en && !pair.zh).length}</b> 英文未配对</span>
           </div>
           {batchMessage && <p className="batchMessage">{batchMessage}</p>}
+          {batchZh.length > 0 && batchEn.length > 0 && <div className="manualPairing">
+            <h3>手动配对兜底</h3>
+            <p>自动配不上时，可给每个中文字幕手动指定一个英文字幕。</p>
+            {batchZh.map((zhItem) => <label key={zhItem.name}>
+              <span>{zhItem.name}</span>
+              <select value={manualMatches[zhItem.name] ?? ''} onChange={(e) => setManualMatch(zhItem.name, e.target.value)}>
+                <option value="">自动匹配</option>
+                {batchEn.map((enItem) => <option key={enItem.name} value={enItem.name}>{enItem.name}</option>)}
+              </select>
+            </label>)}
+          </div>}
           {batchPairs.length > 0 && <div className="batchList" aria-label="批量配对列表">
             {batchPairs.slice(0, 12).map((pair) => <div key={pair.key}><strong>{pair.key}</strong><span>{pair.zh ? '中文✓' : '中文缺失'} · {pair.en ? '英文✓' : '英文缺失'}</span></div>)}
             {batchPairs.length > 12 && <em>还有 {batchPairs.length - 12} 组未显示…</em>}
@@ -376,9 +445,10 @@ export default function Home() {
             </Control>
             <p className="presetHelp">{selectedPreset.description}</p>
             <Control label="中文字体"><select value={options.chineseFont} onChange={(e) => update('chineseFont', e.target.value)}>{chineseFonts.map((font) => <option key={font} value={font}>{font}</option>)}</select></Control>
-            <Control label="中文字号"><input type="number" min="12" value={options.chineseSize} onChange={(e) => update('chineseSize', Number(e.target.value))} /></Control>
+            <Control label="中文字号"><select value={options.chineseSize} onChange={(e) => update('chineseSize', Number(e.target.value))}>{chineseSizeOptions.map((size) => <option key={size} value={size}>{size}</option>)}</select></Control>
+            <Control label="中文颜色"><select value={options.primaryColor} onChange={(e) => update('primaryColor', e.target.value)}>{colorOptions.map((color) => <option key={color.value} value={color.value}>{color.label}</option>)}</select></Control>
             <Control label="英文字体"><select value={options.englishFont} onChange={(e) => update('englishFont', e.target.value)}>{englishFonts.map((font) => <option key={font} value={font}>{font}</option>)}</select></Control>
-            <Control label="英文字号"><input type="number" min="8" value={options.englishSize} onChange={(e) => update('englishSize', Number(e.target.value))} /></Control>
+            <Control label="英文字号"><select value={options.englishSize} onChange={(e) => update('englishSize', Number(e.target.value))}>{englishSizeOptions.map((size) => <option key={size} value={size}>{size}</option>)}</select></Control>
             <Control label="英文颜色"><select value={options.englishColor} onChange={(e) => update('englishColor', e.target.value)}>{colorOptions.map((color) => <option key={color.value} value={color.value}>{color.label}</option>)}</select></Control>
             <Control label="描边颜色"><select value={options.outlineColor} onChange={(e) => update('outlineColor', e.target.value)}>{outlineColorOptions.map((color) => <option key={color.value} value={color.value}>{color.label}</option>)}</select></Control>
             <Control label="描边粗细"><select value={options.outline} onChange={(e) => update('outline', Number(e.target.value))}>{outlineOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></Control>
@@ -464,6 +534,7 @@ function Device({ title, mode, bgClass, zh, en, options, onOpen, large = false }
   const scale = large ? (mode === 'phone' ? 1.35 : 1.65) : (mode === 'phone' ? 0.9 : 1.25);
   const chineseSize = Math.max(11, Math.round(options.chineseSize * scale));
   const englishSize = Math.max(9, Math.round(options.englishSize * scale));
+  const chineseColor = assColorToCss(options.primaryColor, '#ffffff');
   const englishColor = assColorToCss(options.englishColor, '#ffffff');
   const outlineColor = assColorToCss(options.outlineColor, '#2f2f2f');
   const outline = Math.max(0, Number(options.outline) || 0);
@@ -477,7 +548,7 @@ function Device({ title, mode, bgClass, zh, en, options, onOpen, large = false }
     <div className={`${mode === 'phone' ? 'phone' : 'desktop'} ${large ? 'largeDevice' : ''}`}>
       <div className={`frameGrid ${bgClass}`} />
       <div className="subtitle" style={{ textShadow }}>
-        <div style={{ fontFamily: options.chineseFont, fontSize: chineseSize }}>{zh}</div>
+        <div style={{ fontFamily: options.chineseFont, fontSize: chineseSize, color: chineseColor }}>{zh}</div>
         <div style={{ fontFamily: options.englishFont, fontSize: englishSize, color: englishColor }}>{en}</div>
       </div>
     </div>
