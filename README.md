@@ -2,7 +2,7 @@
 
 Subtitle Merge is a small open-source web app and CLI for merging Chinese and English subtitles into compact ASS bilingual subtitles.
 
-The default output imitates the classic YYeTs-style layout that works well on iPhone:
+The default output uses a compact mobile-friendly ASS bilingual layout:
 
 - one `Dialogue` block per bilingual subtitle, not two overlaid tracks
 - Chinese on the main line, English as a smaller inline override below it
@@ -10,6 +10,10 @@ The default output imitates the classic YYeTs-style layout that works well on iP
 - `ScaledBorderAndShadow: no` so outlines stay thin on mobile players
 - default Chinese font `PingFang SC`, default English font `PingFang SC`
 - English line defaults to `\fs12`, white text, dark-gray outline `&H2F2F2F&`
+
+## Privacy and storage
+
+The web app does not save subtitle files to the server. Files are read in the browser with `FileReader`, merged in client-side memory, and downloaded locally. The current server only serves the app and handles the lightweight admin login. There is no subtitle upload API, database write, or file persistence path.
 
 ## Why not LLM by default?
 
@@ -33,10 +37,10 @@ Open <http://localhost:3000>.
 
 The page supports:
 
-- paste/upload-style text areas for Chinese and English ASS/SRT content
+- direct upload or paste for Chinese and English ASS/SRT content
 - merge and download ASS
-- iPhone and desktop visual previews
-- adjustable font, size, color, outline, and English-only retention
+- mobile and desktop visual previews
+- selectable style presets plus adjustable font, size, color, outline, and English-only retention
 - merge stats: Chinese count, English count, paired count, unpaired English count, output count
 
 ## CLI
@@ -45,7 +49,7 @@ The page supports:
 npm run merge -- \
   --zh ./input.zh.ass \
   --en ./input.en.srt \
-  --out ./merged.yyets-iphone.ass
+  --out ./merged.bilingual.ass
 ```
 
 Useful options:
@@ -109,3 +113,14 @@ npm run build
 ## License
 
 MIT
+
+## Admin login
+
+The admin panel is available at `/admin`. Configure it with environment variables:
+
+```bash
+SUBTITLE_MERGE_ADMIN_PASSCODE=change-me
+SUBTITLE_MERGE_ADMIN_TOKEN=random-session-token
+```
+
+The fallback development passcode is `subtitle-admin`. Set a real value before public production use.

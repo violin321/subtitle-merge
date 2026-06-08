@@ -2,7 +2,7 @@
   "name": "subtitle-merge",
   "version": "0.1.0",
   "private": false,
-  "description": "Merge Chinese and English subtitles into compact YYeTs/iPhone-style ASS bilingual subtitles.",
+  "description": "Merge Chinese and English subtitles into compact mobile-friendly ASS bilingual subtitles.",
   "license": "MIT",
   "type": "module",
   "scripts": {

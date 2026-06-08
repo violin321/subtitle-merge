@@ -115,3 +115,43 @@ h2 { margin: 0; font-size: 20px; letter-spacing: -.02em; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; }
 }
+select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: oklch(0.15 0.012 250);
+  color: var(--text);
+  padding: 0 12px;
+}
+.privacyNote {
+  margin: 16px 0 14px;
+  min-height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: color-mix(in oklch, var(--success) 10%, var(--panel));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.privacyNote strong { color: var(--success); }
+.privacyNote a { margin-left: auto; color: var(--accent); text-decoration: none; font-weight: 760; }
+.presetHelp { margin: -4px 0 2px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.adminShell { min-height: 100dvh; display: grid; place-items: center; padding: 28px; }
+.adminCard { width: min(520px, 100%); border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel); padding: 24px; box-shadow: 0 24px 70px rgba(0,0,0,.22); }
+.adminCard h1 { font-size: 30px; margin: 0 0 10px; }
+.adminForm { display: grid; gap: 14px; margin-top: 18px; }
+.adminForm label { display: grid; gap: 8px; color: var(--muted); }
+.wideAdmin { width: min(840px, 100%); }
+.adminGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 20px 0; }
+.adminGrid div { border: 1px solid var(--border); border-radius: 16px; background: var(--raised); padding: 14px; display: grid; gap: 7px; }
+.adminGrid strong { color: var(--text); }
+.adminGrid span { color: var(--muted); font-size: 13px; line-height: 1.5; }
+@media (max-width: 820px) {
+  .privacyNote { align-items: flex-start; flex-direction: column; }
+  .privacyNote a { margin-left: 0; }
+  .adminGrid { grid-template-columns: 1fr; }
+}

@@ -23,15 +23,46 @@ Are you looking for someone?
 This is a longer English subtitle that sits under the Chinese line.
 `;
 
+type Preset = {
+  id: string;
+  name: string;
+  description: string;
+  options: Partial<MergeOptions>;
+};
+
+const presets: Preset[] = [
+  {
+    id: 'mobile-clear',
+    name: '移动端清晰',
+    description: '推荐默认值：小画布、细描边，适合手机横屏。',
+    options: defaultOptions,
+  },
+  {
+    id: 'desktop-balanced',
+    name: '电脑端均衡',
+    description: '字号略大，适合电脑播放器外挂字幕。',
+    options: { ...defaultOptions, chineseSize: 22, englishSize: 13, outline: 1.1, shadow: 1 },
+  },
+  {
+    id: 'minimal-soft',
+    name: '轻描边柔和',
+    description: '降低描边和阴影，减少移动端边缘发硬。',
+    options: { ...defaultOptions, chineseSize: 20, englishSize: 12, outline: 0.6, shadow: 0, outlineColor: '&H4A4A4A' },
+  },
+];
+
 export default function Home() {
   const [zh, setZh] = useState(sampleZh);
   const [en, setEn] = useState(sampleEn);
   const [zhName, setZhName] = useState('sample.zh.ass');
   const [enName, setEnName] = useState('sample.en.srt');
+  const [presetId, setPresetId] = useState(presets[0].id);
   const [options, setOptions] = useState<MergeOptions>(defaultOptions);
   const [ass, setAss] = useState('');
   const [stats, setStats] = useState<MergeStats | null>(null);
   const [error, setError] = useState('');
+
+  const selectedPreset = presets.find((preset) => preset.id === presetId) ?? presets[0];
 
   const previewText = useMemo(() => {
     if (!ass) return ['你在找人吗？', 'Are you looking for someone?'];
@@ -61,6 +92,12 @@ export default function Home() {
     reader.readAsText(file);
   }
 
+  function applyPreset(id: string) {
+    const preset = presets.find((item) => item.id === id) ?? presets[0];
+    setPresetId(preset.id);
+    setOptions({ ...defaultOptions, ...preset.options });
+  }
+
   function runMerge() {
     try {
       const result = mergeSubtitles(zh, en, options);
@@ -82,7 +119,7 @@ export default function Home() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'merged.yyets-iphone.ass';
+    a.download = 'merged.bilingual.ass';
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -91,10 +128,10 @@ export default function Home() {
 
   return (
     <main className="shell">
-      <header className="topbar" aria-label="Project summary">
+      <header className="topbar" aria-label="项目概览">
         <div>
           <p className="kicker">字幕工作台</p>
-          <h1>把中英字幕合成适合 iPhone 播放的 ASS 双语字幕。</h1>
+          <h1>把中英字幕合成适合移动端播放的 ASS 双语字幕。</h1>
         </div>
         <div className="statusStrip" aria-live="polite">
           <span>ASS 输出</span>
@@ -102,7 +139,13 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="workflow" aria-label="Main workflow">
+      <section className="privacyNote" aria-label="隐私说明">
+        <strong>本地处理</strong>
+        <span>字幕文件只在浏览器内读取和合并，当前版本没有上传接口、数据库或服务器落盘逻辑。</span>
+        <a href="/admin">管理入口</a>
+      </section>
+
+      <section className="workflow" aria-label="处理流程">
         <div className="step active"><span>01</span>上传字幕</div>
         <div className="step"><span>02</span>调整样式</div>
         <div className="step"><span>03</span>预览效果</div>
@@ -120,8 +163,8 @@ export default function Home() {
           </div>
 
           <div className="uploadRail">
-            <FileDrop title="中文字幕" fileName={zhName} hint=".ass / .srt / .ssa" onChange={(e) => handleFile(e, 'zh')} />
-            <FileDrop title="英文字幕" fileName={enName} hint=".ass / .srt / .ssa" onChange={(e) => handleFile(e, 'en')} />
+            <FileDrop title="中文字幕" fileName={zhName} hint="支持 .ass / .srt / .ssa" onChange={(e) => handleFile(e, 'zh')} />
+            <FileDrop title="英文字幕" fileName={enName} hint="支持 .ass / .srt / .ssa" onChange={(e) => handleFile(e, 'en')} />
           </div>
 
           <div className="editors">
@@ -134,10 +177,16 @@ export default function Home() {
         </section>
 
         <aside className="panel controls" aria-labelledby="style-title">
-          <p className="sectionLabel">样式预设</p>
-          <h2 id="style-title">YYeTs / iPhone</h2>
-          <p className="hint">单条 Dialogue 双语块，384×288 画布，描边不随分辨率缩放。默认不使用 LLM。</p>
+          <p className="sectionLabel">样式</p>
+          <h2 id="style-title">预设与细节</h2>
+          <p className="hint">选择预设后仍可微调。默认不使用 LLM，不会改写字幕内容。</p>
           <div className="controlGrid">
+            <Control label="样式预设">
+              <select value={presetId} onChange={(e) => applyPreset(e.target.value)}>
+                {presets.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
+              </select>
+            </Control>
+            <p className="presetHelp">{selectedPreset.description}</p>
             <Control label="中文字体"><input value={options.chineseFont} onChange={(e) => update('chineseFont', e.target.value)} /></Control>
             <Control label="中文字号"><input type="number" min="12" value={options.chineseSize} onChange={(e) => update('chineseSize', Number(e.target.value))} /></Control>
             <Control label="英文字体"><input value={options.englishFont} onChange={(e) => update('englishFont', e.target.value)} /></Control>
@@ -158,7 +207,7 @@ export default function Home() {
             <button className="secondary" onClick={download}>下载 ASS</button>
           </div>
           <div className="previewGrid">
-            <Device title="iPhone 横屏" mode="phone" zh={previewText[0]} en={previewText[1]} options={options} />
+            <Device title="手机横屏" mode="phone" zh={previewText[0]} en={previewText[1]} options={options} />
             <Device title="电脑播放器" mode="desktop" zh={previewText[0]} en={previewText[1]} options={options} />
           </div>
         </section>
@@ -196,7 +245,7 @@ function Control({ label, children }: { label: string; children: React.ReactNode
 }
 
 function Stats({ stats }: { stats: MergeStats }) {
-  return <div className="stats" aria-label="Merge statistics">
+  return <div className="stats" aria-label="合并统计">
     <span><b>{stats.chineseCount}</b> 中文</span>
     <span><b>{stats.englishCount}</b> 英文</span>
     <span><b>{stats.pairedCount}</b> 已配对</span>
