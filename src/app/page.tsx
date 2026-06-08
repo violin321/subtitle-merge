@@ -111,8 +111,9 @@ type BatchPair = { key: string; zh?: BatchItem; en?: BatchItem };
 function seasonKey(name: string) {
   return safeNamePart(name)
     .toLowerCase()
-    .replace(/\b(zh|chs|chi|cn|sc|tc|简体|中文|en|eng|english)\b/giu, '')
-    .replace(/[._-]+(zh|chs|chi|cn|sc|tc|en|eng|english)$/iu, '')
+    .replace(/(chinese-simplified|chinese-traditional|simplified-chinese|traditional-chinese)/giu, '')
+    .replace(/\b(zh|zho|chs|cht|chi|cn|sc|tc|简体|繁体|中文|chinese|en|eng|english)\b/giu, '')
+    .replace(/[._-]+(zh|zho|chs|cht|chi|cn|sc|tc|en|eng|english|chinese)$/iu, '')
     .replace(/[-_. ]+/g, '-')
     .replace(/^-|-$/g, '');
 }
