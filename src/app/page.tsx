@@ -109,15 +109,25 @@ type BatchItem = { name: string; key: string; text: string };
 type BatchPair = { key: string; zh?: BatchItem; en?: BatchItem };
 
 function seasonKey(name: string) {
-  return safeNamePart(name)
-    .toLowerCase()
+  const raw = name.toLowerCase().normalize('NFKC');
+  const episode = raw.match(/(?:^|[^a-z0-9])s(\d{1,2})\s*[._ -]?e(\d{1,3})(?:[^a-z0-9]|$)/i)
+    ?? raw.match(/(?:^|[^a-z0-9])(\d{1,2})\s*x\s*(\d{1,3})(?:[^a-z0-9]|$)/i);
+  if (episode) return `s${episode[1].padStart(2, '0')}e${episode[2].padStart(2, '0')}`;
+
+  const epOnly = raw.match(/(?:^|[^a-z0-9])(?:ep|episode|第)?\s*(\d{1,3})(?:集|话|[^a-z0-9]|$)/i);
+  if (epOnly) return `ep${epOnly[1].padStart(2, '0')}`;
+
+  return name
+    .replace(/\.(ass|srt|ssa|txt)$/i, '')
     .replace(/(chinese-simplified|chinese-traditional|simplified-chinese|traditional-chinese)/giu, '')
     .replace(/\b(zh|zho|chs|cht|chi|cn|sc|tc|简体|繁体|中文|chinese|en|eng|english)\b/giu, '')
-    .replace(/[._-]+(zh|zho|chs|cht|chi|cn|sc|tc|en|eng|english|chinese)$/iu, '')
+    .replace(/[._ -]+(zh|zho|chs|cht|chi|cn|sc|tc|en|eng|english|chinese)$/iu, '')
+    .replace(/[^\p{L}\p{N}._-]+/gu, '-')
     .replace(/[-_. ]+/g, '-')
-    .replace(/^-|-$/g, '');
+    .replace(/^-|-$/g, '')
+    .toLowerCase()
+    .slice(0, 120) || 'subtitle';
 }
-
 function pairBatch(zhItems: BatchItem[], enItems: BatchItem[]) {
   const map = new Map<string, BatchPair>();
   for (const item of zhItems) map.set(item.key, { ...(map.get(item.key) ?? { key: item.key }), zh: item });
