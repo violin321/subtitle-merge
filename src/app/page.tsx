@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useMemo, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { defaultOptions, mergeSubtitles, type MergeOptions, type MergeStats } from '@/lib/subtitles';
 
 const sampleZh = `[Script Info]
@@ -22,6 +22,28 @@ Are you looking for someone?
 00:00:05,100 --> 00:00:08,000
 This is a longer English subtitle that sits under the Chinese line.
 `;
+
+
+const chineseFonts = ['PingFang SC', 'Microsoft YaHei', 'Source Han Sans SC', 'Noto Sans CJK SC', 'Heiti SC', 'SimHei'];
+const englishFonts = ['PingFang SC', 'Helvetica Neue', 'Arial', 'Source Sans 3', 'Noto Sans', 'Verdana'];
+const colorOptions = [
+  { label: '白色', value: '&H00FFFFFF' },
+  { label: '暖白', value: '&H00F5F5F5' },
+  { label: '浅灰', value: '&H00DCDCDC' },
+  { label: '淡黄', value: '&H00D8E8FF' },
+];
+const outlineColorOptions = [
+  { label: '深灰', value: '&H2F2F2F' },
+  { label: '柔黑', value: '&H4A4A4A' },
+  { label: '黑色', value: '&H000000' },
+  { label: '无感灰', value: '&H666666' },
+];
+const outlineOptions = [
+  { label: '无', value: 0 },
+  { label: '极细 0.5', value: 0.5 },
+  { label: '标准 1.0', value: 1 },
+  { label: '稍强 1.3', value: 1.3 },
+];
 
 type Preset = {
   id: string;
@@ -74,6 +96,20 @@ export default function Home() {
   }, [ass]);
 
   const status = stats ? `${stats.pairedCount}/${stats.chineseCount} 已配对` : '就绪';
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const result = mergeSubtitles(zh, en, options);
+        setAss(result.ass);
+        setStats(result.stats);
+        setError('');
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+      }
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [zh, en, options]);
 
   function handleFile(event: ChangeEvent<HTMLInputElement>, target: 'zh' | 'en') {
     const file = event.target.files?.[0];
@@ -187,13 +223,13 @@ export default function Home() {
               </select>
             </Control>
             <p className="presetHelp">{selectedPreset.description}</p>
-            <Control label="中文字体"><input value={options.chineseFont} onChange={(e) => update('chineseFont', e.target.value)} /></Control>
+            <Control label="中文字体"><select value={options.chineseFont} onChange={(e) => update('chineseFont', e.target.value)}>{chineseFonts.map((font) => <option key={font} value={font}>{font}</option>)}</select></Control>
             <Control label="中文字号"><input type="number" min="12" value={options.chineseSize} onChange={(e) => update('chineseSize', Number(e.target.value))} /></Control>
-            <Control label="英文字体"><input value={options.englishFont} onChange={(e) => update('englishFont', e.target.value)} /></Control>
+            <Control label="英文字体"><select value={options.englishFont} onChange={(e) => update('englishFont', e.target.value)}>{englishFonts.map((font) => <option key={font} value={font}>{font}</option>)}</select></Control>
             <Control label="英文字号"><input type="number" min="8" value={options.englishSize} onChange={(e) => update('englishSize', Number(e.target.value))} /></Control>
-            <Control label="英文颜色"><input value={options.englishColor} onChange={(e) => update('englishColor', e.target.value)} /></Control>
-            <Control label="描边颜色"><input value={options.outlineColor} onChange={(e) => update('outlineColor', e.target.value)} /></Control>
-            <Control label="描边粗细"><input type="number" step="0.1" min="0" value={options.outline} onChange={(e) => update('outline', Number(e.target.value))} /></Control>
+            <Control label="英文颜色"><select value={options.englishColor} onChange={(e) => update('englishColor', e.target.value)}>{colorOptions.map((color) => <option key={color.value} value={color.value}>{color.label}</option>)}</select></Control>
+            <Control label="描边颜色"><select value={options.outlineColor} onChange={(e) => update('outlineColor', e.target.value)}>{outlineColorOptions.map((color) => <option key={color.value} value={color.value}>{color.label}</option>)}</select></Control>
+            <Control label="描边粗细"><select value={options.outline} onChange={(e) => update('outline', Number(e.target.value))}>{outlineOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></Control>
             <label className="switch"><input type="checkbox" checked={options.keepEnglishOnly} onChange={(e) => update('keepEnglishOnly', e.target.checked)} /> 保留英文-only 音效/歌词</label>
           </div>
         </aside>
@@ -202,7 +238,7 @@ export default function Home() {
           <div className="panelHead compact">
             <div>
               <p className="sectionLabel">预览</p>
-              <h2 id="preview-title">播放预览</h2>
+              <h2 id="preview-title">实时播放预览</h2>
             </div>
             <button className="secondary" onClick={download}>下载 ASS</button>
           </div>
@@ -219,7 +255,7 @@ export default function Home() {
               <h2 id="output-title">生成的 ASS</h2>
             </div>
           </div>
-          <textarea value={ass} readOnly placeholder="合并后可在这里检查 ASS 输出。" />
+          <textarea value={ass} readOnly placeholder="会随字幕内容和样式设置自动更新。" />
         </section>
       </section>
     </main>
