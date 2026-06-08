@@ -76,3 +76,39 @@ h3 { margin: .3rem 0 .7rem; color: var(--muted); font-size: .9rem; }
   .hero, .grid, .twoCols, .previewGrid { grid-template-columns: 1fr; }
   .phone { width: 100%; }
 }
+.uploadRail { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+.fileDrop {
+  position: relative;
+  min-height: 118px;
+  border-radius: 22px;
+  border: 1px dashed rgba(139,211,255,.44);
+  background:
+    linear-gradient(135deg, rgba(139,211,255,.12), rgba(182,240,156,.06)),
+    rgba(0,0,0,.18);
+  padding: 18px 18px 18px 92px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+.fileDrop:hover { transform: translateY(-2px); border-color: rgba(182,240,156,.72); background: linear-gradient(135deg, rgba(139,211,255,.18), rgba(182,240,156,.1)), rgba(0,0,0,.22); }
+.fileDrop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.fileDrop strong { display: block; color: var(--text); font-size: 1.02rem; margin-bottom: .35rem; }
+.fileDrop small { color: var(--muted); line-height: 1.5; }
+.fileIcon {
+  position: absolute;
+  left: 18px;
+  top: 20px;
+  width: 54px;
+  height: 64px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: #071016;
+  font-size: .72rem;
+  font-weight: 950;
+  letter-spacing: .08em;
+  background: linear-gradient(145deg, var(--accent), var(--accent-2));
+  box-shadow: 0 14px 34px rgba(139,211,255,.2);
+}
+.fileIcon::after { content: ''; position: absolute; right: 0; top: 0; border-width: 0 14px 14px 0; border-style: solid; border-color: transparent rgba(255,255,255,.58) transparent transparent; }
+@media (max-width: 900px) { .uploadRail { grid-template-columns: 1fr; } }

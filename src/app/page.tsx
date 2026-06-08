@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { ChangeEvent, useMemo, useState } from 'react';
 import { defaultOptions, mergeSubtitles, type MergeOptions, type MergeStats } from '@/lib/subtitles';
 
 const sampleZh = `[Script Info]
@@ -51,8 +51,22 @@ export default function Home() {
     }
   }
 
+  function handleFile(event: ChangeEvent<HTMLInputElement>, target: 'zh' | 'en') {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result ?? '');
+      if (target === 'zh') setZh(text);
+      else setEn(text);
+    };
+    reader.readAsText(file);
+  }
+
   function download() {
-    const blob = new Blob([ass], { type: 'text/plain;charset=utf-8' });
+    if (!ass) runMerge();
+    const content = ass || mergeSubtitles(zh, en, options).ass;
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -80,13 +94,17 @@ export default function Home() {
       <section className="grid">
         <div className="panel wide">
           <h2>1. 输入字幕</h2>
+          <div className="uploadRail">
+            <FileDrop title="中文字幕文件" hint="支持 .ass / .srt，上传后仍可编辑文本" onChange={(e) => handleFile(e, 'zh')} />
+            <FileDrop title="英文字幕文件" hint="支持 .ass / .srt，可保留或删除英文-only" onChange={(e) => handleFile(e, 'en')} />
+          </div>
           <div className="twoCols">
             <label>中文字幕（ASS/SRT）<textarea value={zh} onChange={(e) => setZh(e.target.value)} /></label>
             <label>英文字幕（ASS/SRT）<textarea value={en} onChange={(e) => setEn(e.target.value)} /></label>
           </div>
           <div className="actions">
             <button onClick={runMerge}>合并字幕</button>
-            <button className="secondary" disabled={!ass} onClick={download}>下载 ASS</button>
+            <button className="secondary" onClick={download}>下载 ASS</button>
           </div>
           {error && <p className="error">{error}</p>}
           {stats && <div className="stats">
@@ -122,6 +140,18 @@ export default function Home() {
         </div>
       </section>
     </main>
+  );
+}
+
+
+function FileDrop({ title, hint, onChange }: { title: string; hint: string; onChange: (event: ChangeEvent<HTMLInputElement>) => void }) {
+  return (
+    <label className="fileDrop">
+      <input type="file" accept=".ass,.srt,.ssa,text/plain" onChange={onChange} />
+      <span className="fileIcon">ASS</span>
+      <strong>{title}</strong>
+      <small>{hint}</small>
+    </label>
   );
 }
 
