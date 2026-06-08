@@ -197,3 +197,5 @@ button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
 .manualPairing label { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, .9fr); gap: 10px; align-items: center; color: var(--muted); font-size: 12px; }
 .manualPairing label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 820px) { .manualPairing label { grid-template-columns: 1fr; } }
+.fontStatus { display: grid; gap: 6px; border: 1px solid var(--border); border-radius: 14px; background: color-mix(in oklch, var(--raised) 70%, transparent); padding: 9px 10px; color: var(--muted); font-size: 12px; }
+.fontStatus span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }

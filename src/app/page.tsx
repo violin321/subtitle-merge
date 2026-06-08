@@ -209,6 +209,34 @@ async function readBatchFiles(files: FileList | null): Promise<BatchItem[]> {
   })));
 }
 
+
+function fontStack(font: string) {
+  const fallback = '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif';
+  return `"${font}", ${fallback}`;
+}
+
+function useFontAvailability(fonts: string[]) {
+  const [available, setAvailable] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      if (typeof document === 'undefined' || !('fonts' in document)) return;
+      try {
+        await document.fonts.ready;
+        if (cancelled) return;
+        const next: Record<string, boolean> = {};
+        for (const font of fonts) next[font] = document.fonts.check(`16px "${font}"`, '字幕预览 Sample');
+        setAvailable(next);
+      } catch {
+        // FontFaceSet may be unavailable in older browsers; silently skip.
+      }
+    };
+    check();
+    return () => { cancelled = true; };
+  }, [fonts.join('|')]);
+  return available;
+}
+
 export default function Home() {
   const [zh, setZh] = useState(sampleZh);
   const [en, setEn] = useState(sampleEn);
@@ -230,6 +258,7 @@ export default function Home() {
   const selectedPreset = presets.find((preset) => preset.id === presetId) ?? presets[0];
   const selectedBg = previewBackgrounds.find((item) => item.id === previewBg) ?? previewBackgrounds[0];
   const outputName = `${safeNamePart(zhName)}.${presetSlug(presetId)}.bilingual.ass`;
+  const fontAvailability = useFontAvailability([options.chineseFont, options.englishFont]);
   const batchPairs = useMemo(() => pairBatch(batchZh, batchEn, manualMatches), [batchZh, batchEn, manualMatches]);
   const matchedBatchCount = batchPairs.filter((pair) => pair.zh && pair.en).length;
 
@@ -463,6 +492,10 @@ export default function Home() {
               </select>
             </Control>
             <p className="presetHelp">{selectedPreset.description}</p>
+            <div className="fontStatus" aria-label="字体预览状态">
+              <span>中文：{options.chineseFont} {fontAvailability[options.chineseFont] === false ? '可能回退' : '预览中'}</span>
+              <span>英文：{options.englishFont} {fontAvailability[options.englishFont] === false ? '可能回退' : '预览中'}</span>
+            </div>
             <Control label="中文字体"><select value={options.chineseFont} onChange={(e) => update('chineseFont', e.target.value)}>{chineseFonts.map((font) => <option key={font} value={font}>{font}</option>)}</select></Control>
             <Control label="中文字号"><select value={options.chineseSize} onChange={(e) => update('chineseSize', Number(e.target.value))}>{chineseSizeOptions.map((size) => <option key={size} value={size}>{size}</option>)}</select></Control>
             <Control label="中文颜色"><select value={options.primaryColor} onChange={(e) => update('primaryColor', e.target.value)}>{colorOptions.map((color) => <option key={color.value} value={color.value}>{color.label}</option>)}</select></Control>
@@ -567,8 +600,8 @@ function Device({ title, mode, bgClass, zh, en, options, onOpen, large = false }
     <div className={`${mode === 'phone' ? 'phone' : 'desktop'} ${large ? 'largeDevice' : ''}`}>
       <div className={`frameGrid ${bgClass}`} />
       <div className="subtitle" style={{ textShadow }}>
-        <div style={{ fontFamily: options.chineseFont, fontSize: chineseSize, color: chineseColor }}>{zh}</div>
-        <div style={{ fontFamily: options.englishFont, fontSize: englishSize, color: englishColor }}>{en}</div>
+        <div style={{ fontFamily: fontStack(options.chineseFont), fontSize: chineseSize, color: chineseColor }}>{zh}</div>
+        <div style={{ fontFamily: fontStack(options.englishFont), fontSize: englishSize, color: englishColor }}>{en}</div>
       </div>
     </div>
   </figure>;
