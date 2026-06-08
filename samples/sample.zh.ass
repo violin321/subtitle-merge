@@ -1,0 +1,6 @@
+[Script Info]
+ScriptType: v4.00+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 1,0:00:02.00,0:00:04.10,Zh,,0,0,0,,你在找人吗？
+Dialogue: 1,0:00:05.00,0:00:08.00,Zh,,0,0,0,,这是一句比较长的中文台词\N会自然分成两行

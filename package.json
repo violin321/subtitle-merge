@@ -1,0 +1,29 @@
+{
+  "name": "subtitle-merge",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Merge Chinese and English subtitles into compact YYeTs/iPhone-style ASS bilingual subtitles.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -H 0.0.0.0",
+    "build": "next build",
+    "start": "next start -H 0.0.0.0",
+    "lint": "next lint || true",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx test/merge.test.ts",
+    "merge": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}
